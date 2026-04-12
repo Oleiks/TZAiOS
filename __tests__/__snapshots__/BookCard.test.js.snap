@@ -1,0 +1,176 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BookCard snapshot matches snapshot 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    {
+      "alignItems": "flex-start",
+      "backgroundColor": "#fdf7eb",
+      "borderColor": "#d9d0c2",
+      "borderRadius": 16,
+      "borderWidth": 1,
+      "flexDirection": "row",
+      "gap": 10,
+      "padding": 10,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "backgroundColor": "#d7e8f7",
+        "borderRadius": 10,
+        "height": 106,
+        "width": 72,
+      }
+    }
+  />
+  <View
+    style={
+      {
+        "flex": 1,
+        "gap": 6,
+      }
+    }
+  >
+    <Text
+      numberOfLines={2}
+      style={
+        {
+          "color": "#1f2430",
+          "fontSize": 16,
+          "fontWeight": "700",
+        }
+      }
+    >
+      Snapshot Book
+    </Text>
+    <Text
+      numberOfLines={1}
+      style={
+        {
+          "color": "#657182",
+          "fontSize": 13,
+        }
+      }
+    >
+      Writer Name
+    </Text>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 10,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "color": "#657182",
+            "fontSize": 12,
+          }
+        }
+      >
+        2024
+      </Text>
+      <Text
+        style={
+          {
+            "color": "#657182",
+            "fontSize": 12,
+          }
+        }
+      >
+        2
+         editions
+      </Text>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 6,
+          "marginTop": 4,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "backgroundColor": "#d7e8f7",
+            "borderRadius": 999,
+            "maxWidth": 110,
+            "paddingHorizontal": 8,
+            "paddingVertical": 3,
+          }
+        }
+      >
+        <Text
+          numberOfLines={1}
+          style={
+            {
+              "color": "#1f5a8a",
+              "fontSize": 11,
+            }
+          }
+        >
+          fiction
+        </Text>
+      </View>
+      <View
+        style={
+          {
+            "backgroundColor": "#d7e8f7",
+            "borderRadius": 999,
+            "maxWidth": 110,
+            "paddingHorizontal": 8,
+            "paddingVertical": 3,
+          }
+        }
+      >
+        <Text
+          numberOfLines={1}
+          style={
+            {
+              "color": "#1f5a8a",
+              "fontSize": 11,
+            }
+          }
+        >
+          mystery
+        </Text>
+      </View>
+    </View>
+  </View>
+</View>
+`;
