@@ -1,5 +1,6 @@
 import React from "react";
 import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { resolveAssetUrl } from "../api/openLibrary";
 import { colors, spacing } from "../theme/colors";
 
 export function HorizontalBookList({ title, books, onPressBook }) {
@@ -14,7 +15,7 @@ export function HorizontalBookList({ title, books, onPressBook }) {
         showsHorizontalScrollIndicator={false}
         renderItem={({ item }) => (
           <Pressable style={styles.item} onPress={() => onPressBook(item)}>
-            {item.coverUrl ? <Image source={{ uri: item.coverUrl }} style={styles.cover} /> : <View style={styles.coverPlaceholder} />}
+            {item.coverUrl ? <Image source={{ uri: resolveAssetUrl(item.coverUrl) }} style={styles.cover} /> : <View style={styles.coverPlaceholder} />}
             <Text numberOfLines={2} style={styles.itemTitle}>
               {item.title}
             </Text>

@@ -1,21 +1,55 @@
 # Open Library Mobile
 
-Expo app for Android and iOS using the Open Library API.
+Aplikacja Expo na Android i iOS z backendem Spring Boot, który proxyzuje Open Library.
 
-## Run
+## Uruchomienie
+
+### Wymagania
+
+- Node.js i npm
+- Java 21
+- Maven
+- Docker
+
+### 1. Uruchom Postgresa
+
+```bash
+docker compose up -d postgres
+```
+
+Postgres działa na `localhost:5433` i zapisuje dane w wolumenie `postgres-data`.
+
+### 2. Uruchom backend
+
+```bash
+mvn -f backend/library/pom.xml spring-boot:run
+```
+
+Backend udostępnia API pod adresem `http://localhost:8080/api/v1`.
+
+### 3. Uruchom aplikację mobilną
 
 ```bash
 npm install
 npm run start
 ```
 
-Then open on Android or iOS from the Expo menu.
+Następnie uruchom aplikację na Androidzie, iOS lub w przeglądarce z menu Expo.
 
-## Features
+Jeśli uruchamiasz na fizycznym urządzeniu, ustaw `EXPO_PUBLIC_LIBRARY_API_URL` na adres backendu dostępny z telefonu.
 
-- Home feed
-- Search
-- Subject browsing
-- Book detail views
-- Author pages
-- Saved books
+## Testy
+
+```bash
+npm test
+mvn -f backend/library/pom.xml test
+```
+
+## Funkcje
+
+- Strona główna
+- Wyszukiwanie
+- Przeglądanie subjectów
+- Widok szczegółów książki
+- Strona autora
+- Zapisane książki

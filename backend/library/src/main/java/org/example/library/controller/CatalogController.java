@@ -1,9 +1,12 @@
 package org.example.library.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import lombok.RequiredArgsConstructor;
 import org.example.library.dto.catalog.HomeResponse;
 import org.example.library.dto.catalog.SearchResponse;
 import org.example.library.dto.catalog.SubjectResponse;
+import org.example.library.dto.catalog.AuthorDto;
+import org.example.library.dto.catalog.AuthorWorksResponse;
+import org.example.library.dto.catalog.BookDetailsDto;
 import org.example.library.service.CatalogService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,12 +16,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class CatalogController {
   private final CatalogService catalogService;
-
-  public CatalogController(CatalogService catalogService) {
-    this.catalogService = catalogService;
-  }
 
   @GetMapping("/home")
   public HomeResponse home() {
@@ -36,22 +36,17 @@ public class CatalogController {
   }
 
   @GetMapping("/books")
-  public JsonNode book(@RequestParam String key) {
+  public BookDetailsDto book(@RequestParam String key) {
     return catalogService.book(key);
   }
 
-  @GetMapping("/books/editions")
-  public JsonNode editions(@RequestParam String key) {
-    return catalogService.editions(key);
-  }
-
   @GetMapping("/authors")
-  public JsonNode author(@RequestParam String key) {
+  public AuthorDto author(@RequestParam String key) {
     return catalogService.author(key);
   }
 
   @GetMapping("/authors/works")
-  public JsonNode authorWorks(@RequestParam String key) {
-    return catalogService.authorWorks(key);
+  public AuthorWorksResponse authorWorks(@RequestParam String key, @RequestParam(defaultValue = "10") int limit) {
+    return catalogService.authorWorks(key, limit);
   }
 }

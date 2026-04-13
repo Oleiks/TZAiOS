@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { getAuthor, getAuthorWorks } from "../api/openLibrary";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { getAuthor, getAuthorWorks, getCoverUrl, normalizeAuthorName, normalizeCoverUrl, resolveAssetUrl } from "../api/openLibrary";
 import { BookCard } from "../components/BookCard";
 import { LoadingView } from "../components/LoadingView";
 import { colors, spacing } from "../theme/colors";
@@ -19,16 +19,29 @@ export function AuthorScreen({ navigation, route }) {
       setLoading(true);
       setError("");
       try {
-        const [authorResult, worksResult] = await Promise.allSettled([getAuthor(authorKey), getAuthorWorks(authorKey, 12)]);
+        const [authorResult, worksResult] = await Promise.allSettled([getAuthor(authorKey), getAuthorWorks(authorKey, 10)]);
         if (!mounted) return;
         if (authorResult.status === "fulfilled") {
           setAuthor(authorResult.value);
         }
         if (worksResult.status === "fulfilled") {
+          const resolvedAuthorName = authorResult.status === "fulfilled" ? normalizeAuthorName(authorResult.value?.name, authorName) : authorName;
           const normalizedWorks = Array.isArray(worksResult.value)
             ? worksResult.value
             : worksResult.value?.entries || worksResult.value?.works || worksResult.value?.items || [];
-          setWorks(normalizedWorks);
+          const enrichedWorks = normalizedWorks.slice(0, 10).map((work, index) => ({
+            ...work,
+            id: work.id || work.key || `${authorKey}-${index}`,
+            workKey: work.workKey || work.key || work.id || null,
+            title: work.title || work.name || "Untitled",
+            subjects: work.subjects || work.subject || [],
+            authorName: normalizeAuthorName(work.authorName, resolvedAuthorName),
+            authorKey: work.authorKey || authorKey,
+            coverUrl: normalizeCoverUrl(work.coverUrl || work.cover_url || getCoverUrl({ coverId: work.covers?.[0] }))
+          }));
+          const coverUris = enrichedWorks.map((work) => work.coverUrl).filter(Boolean).map((url) => resolveAssetUrl(url));
+          await Promise.allSettled(coverUris.map((uri) => Image.prefetch(uri)));
+          setWorks(enrichedWorks);
         }
         if (authorResult.status === "rejected" && worksResult.status === "rejected") {
           throw authorResult.reason || worksResult.reason;
@@ -47,41 +60,35 @@ export function AuthorScreen({ navigation, route }) {
   }, [authorKey]);
 
   if (loading) return <LoadingView label="Loading author profile..." />;
+  const resolvedAuthorName = normalizeAuthorName(author?.name, authorName);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.hero}>
-        <Text style={styles.name}>{author?.name || authorName}</Text>
+        <Text style={styles.name}>{resolvedAuthorName}</Text>
         <Text style={styles.bio}>{author?.bio?.value || author?.bio || "No biography available."}</Text>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Works</Text>
-        {works.map((work, index) => (
-          <View key={work.key || work.id || `${authorKey}-${index}`} style={{ marginBottom: spacing.sm }}>
-            <BookCard
-              book={{
-                id: work.key || work.id || `${authorKey}-${index}`,
-                workKey: work.key || work.id || null,
-                title: work.title || work.name || "Untitled",
-                authorName: author?.name || authorName,
-                authorKey,
-                subjects: work.subjects || work.subject || [],
-                coverUrl: work.coverUrl || work.cover_url || (work.covers?.[0] ? `/covers/id/${work.covers[0]}?size=M` : null)
-              }}
-              onPress={() => navigation.navigate("BookDetail", { book: {
-                id: work.key || work.id || `${authorKey}-${index}`,
-                workKey: work.key || work.id || null,
-                title: work.title || work.name || "Untitled",
-                authorName: author?.name || authorName,
-                authorKey,
-                subjects: work.subjects || work.subject || [],
-                coverUrl: work.coverUrl || work.cover_url || (work.covers?.[0] ? `/covers/id/${work.covers[0]}?size=M` : null)
-              } })}
-            />
-          </View>
-        ))}
+        {works.map((work, index) => {
+          const book = {
+            id: work.key || work.id || `${authorKey}-${index}`,
+            workKey: work.key || work.id || null,
+            title: work.title || work.name || "Untitled",
+            authorName: normalizeAuthorName(work.authorName, resolvedAuthorName),
+            authorKey: work.authorKey || authorKey,
+            subjects: work.subjects || work.subject || [],
+            coverUrl: normalizeCoverUrl(work.coverUrl || work.cover_url || getCoverUrl({ coverId: work.covers?.[0] }))
+          };
+
+          return (
+            <View key={book.id} style={{ marginBottom: spacing.sm }}>
+              <BookCard book={book} onPress={() => navigation.navigate("BookDetail", { book })} />
+            </View>
+          );
+        })}
       </View>
     </ScrollView>
   );

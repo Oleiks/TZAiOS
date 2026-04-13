@@ -2,6 +2,8 @@ package org.example.library.controller;
 
 import jakarta.validation.Valid;
 import java.util.UUID;
+
+import lombok.RequiredArgsConstructor;
 import org.example.library.dto.auth.AuthResponse;
 import org.example.library.dto.auth.LoginRequest;
 import org.example.library.dto.auth.RefreshRequest;
@@ -17,12 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@RequiredArgsConstructor
 public class AuthController {
   private final AuthService authService;
-
-  public AuthController(AuthService authService) {
-    this.authService = authService;
-  }
 
   @PostMapping("/register")
   @ResponseStatus(HttpStatus.CREATED)

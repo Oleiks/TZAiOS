@@ -10,7 +10,8 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 
 ## Skład zespołu
 
-- do uzupełnienia.
+- Miraslau Farelnik, indeks: 191573 - frontend, testy frontend, networking, UI, model danych, architektura
+- Aleksander Górski, indeks: 188827 - backend, testy backend, testy frontend, networking, UI, architektura, poprawki
 
 ## Zakres
 
@@ -26,7 +27,7 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 - Open Library jako zewnętrzny katalog,
 - własny backend Spring Boot jako jedyny punkt kontaktu dla aplikacji,
 - cache z TTL oraz stale-while-revalidate w Postgres,
-- zapisane książki przechowywane po stronie backendu.
+- zapisane książki i ostatnie wyszukiwania przechowywane lokalnie w `AsyncStorage`.
 
 ## Odpowiedzialność backendu
 
@@ -45,7 +46,7 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 - Detail - szczegóły książki z zakładkami,
 - Author - profil autora i jego dzieła,
 - Saved - zapisane książki,
-- Settings - informacje o aplikacji i ustawienia.
+- Settings - informacje o aplikacji i czyszczenie lokalnych danych.
 
 ### Nawigacja
 
@@ -53,22 +54,22 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 - stack navigation wewnątrz każdej sekcji,
 - przejścia z list do widoku szczegółowego,
 - przejście z książki do autora,
-- zakładki w szczegółach książki: `Overview / Editions / Related`.
+- zakładki w szczegółach książki: `Overview / Related`.
 
 ### Elementy interfejsu
 
 - hero card na Home,
-- poziome karuzele książek,
+- poziome listy książek,
 - segmented control w widoku szczegółów,
 - chips dla subjectów i szybkich wyszukiwań,
-- akcje save/unsave na karcie książki,
-- prosty panel ustawień w Settings.
+- akcja save/unsave w widoku szczegółów książki,
+- prosty panel ustawień z czyszczeniem lokalnych danych.
 
 ## Szkic widoków
 
-### Home
+Grafiki nie są dołączone do repozytorium, więc poniżej znajduje się tekstowy szkic widoków zgodny z aktualną implementacją.
 
-![Home screen](./img/home.png)
+### Home
 
 ```text
 [Hero]
@@ -79,8 +80,6 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 
 ### Search
 
-![Search screen](./img/search.png)
-
 ```text
 [Search input]
 [Quick search chips]
@@ -90,8 +89,6 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 
 ### Subjects
 
-![Subjects screen](./img/subjects.png)
-
 ```text
 [Subject chips]
 [Books list]
@@ -99,18 +96,14 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 
 ### Detail
 
-![Detail screen](./img/detail.png)
-
 ```text
 [Cover + title + author]
 [Save button] [Author button]
-[Overview | Editions | Related]
+[Overview | Related]
 [Tab content]
 ```
 
 ### Author
-
-![Author screen](./img/author.png)
 
 ```text
 [Author name]
@@ -120,8 +113,6 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 
 ### Saved
 
-![Saved screen](./img/saved.png)
-
 ```text
 [Header]
 [Saved books list]
@@ -129,18 +120,19 @@ Projekt jest przygotowany pod ocenę 5.0, ponieważ wykorzystuje autorski backen
 
 ### Settings
 
-![Settings screen](./img/settings.png)
-
 ```text
 [App info]
-[Cache / refresh info]
-[Utility actions]
+[Clear saved data]
 ```
 
 ## Główne funkcjonalności
 
 - przeglądanie katalogu przez backend,
 - szybkie wyszukiwanie i filtrowanie,
+- przeglądanie subjectów,
+- widok szczegółów książki,
+- widok autora i jego dzieł,
 - zapis książek,
+- lokalne przechowywanie zapisanych książek i ostatnich wyszukiwań,
 - działanie na Android i iOS,
 - czytelne widoki szczegółowe z obrazami i zakładkami.

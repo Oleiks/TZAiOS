@@ -3,10 +3,18 @@ package org.example.library.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.List;
-import org.example.library.dto.catalog.BookSummaryDto;
 
+import lombok.NoArgsConstructor;
+import org.example.library.dto.catalog.AuthorDto;
+import org.example.library.dto.catalog.AuthorRefDto;
+import org.example.library.dto.catalog.AuthorWorksResponse;
+import org.example.library.dto.catalog.BookAuthorRefDto;
+import org.example.library.dto.catalog.BookDetailsDto;
+import org.example.library.dto.catalog.BookSummaryDto;
+import org.example.library.dto.catalog.BookWorkRefDto;
+
+@NoArgsConstructor
 public final class OpenLibraryMapper {
-  private OpenLibraryMapper() {}
 
   public static BookSummaryDto fromSearchDoc(JsonNode doc) {
     return new BookSummaryDto(
@@ -48,20 +56,119 @@ public final class OpenLibraryMapper {
     return books;
   }
 
+  public static BookDetailsDto fromBookDetails(JsonNode book) {
+    return new BookDetailsDto(
+        value(book, "key", null),
+        value(book, "title", "Untitled"),
+        proseText(book.path("description"), book.path("first_sentence"), book.path("notes"), book.path("excerpt"), book.path("excerpts")),
+        textValue(book, "first_sentence"),
+        textValue(book, "notes"),
+        textValue(book, "excerpt"),
+        coverUrl(book),
+        longValues(book.path("covers"), 12),
+        bookAuthors(book.path("authors")),
+        bookWorks(book.path("works")),
+        listOfStrings(book.path("subjects"), 10));
+  }
+
+  public static AuthorDto fromAuthor(JsonNode author) {
+    return new AuthorDto(
+        value(author, "key", null),
+        value(author, "name", "Unknown author"),
+        proseText(author.path("bio")),
+        value(author, "personal_name", null),
+        longValues(author.path("photos"), 12));
+  }
+
+  public static AuthorWorksResponse fromAuthorWorks(JsonNode payload) {
+    List<BookSummaryDto> entries = new ArrayList<>();
+    if (payload != null) {
+      JsonNode array = payload.path("entries");
+      if (array.isArray()) {
+        for (JsonNode work : array) {
+          entries.add(fromSubjectWork(work));
+        }
+      } else if (payload.isArray()) {
+        for (JsonNode work : payload) {
+          entries.add(fromSubjectWork(work));
+        }
+      }
+    }
+    return new AuthorWorksResponse(entries);
+  }
+
   private static String coverUrl(JsonNode doc) {
     if (doc.hasNonNull("cover_i")) {
-      return "/covers/id/" + doc.path("cover_i").asText() + "?size=M";
+      long value = doc.path("cover_i").asLong(-1);
+      if (value > 0) {
+        return "/covers/id/" + value + "?size=M";
+      }
+    }
+    if (doc.hasNonNull("cover_edition_key")) {
+      String value = doc.path("cover_edition_key").asText("").trim();
+      if (!value.isEmpty() && !"-1".equals(value)) {
+        return "/covers/olid/" + value + "?size=M";
+      }
     }
     if (doc.path("isbn").isArray() && !doc.path("isbn").isEmpty()) {
-      return "/covers/isbn/" + doc.path("isbn").get(0).asText() + "?size=M";
+      String value = doc.path("isbn").get(0).asText("").trim();
+      if (!value.isEmpty() && !"-1".equals(value)) {
+        return "/covers/isbn/" + value + "?size=M";
+      }
     }
     if (doc.hasNonNull("cover_id")) {
-      return "/covers/id/" + doc.path("cover_id").asText() + "?size=M";
+      long value = doc.path("cover_id").asLong(-1);
+      if (value > 0) {
+        return "/covers/id/" + value + "?size=M";
+      }
     }
     if (doc.path("covers").isArray() && !doc.path("covers").isEmpty()) {
-      return "/covers/id/" + doc.path("covers").get(0).asText() + "?size=M";
+      long value = doc.path("covers").get(0).asLong(-1);
+      if (value > 0) {
+        return "/covers/id/" + value + "?size=M";
+      }
     }
     return null;
+  }
+
+  private static List<BookAuthorRefDto> bookAuthors(JsonNode array) {
+    List<BookAuthorRefDto> authors = new ArrayList<>();
+    if (array != null && array.isArray()) {
+      for (JsonNode node : array) {
+        JsonNode author = node.path("author");
+        String key = author.hasNonNull("key") ? author.path("key").asText() : node.path("key").asText(null);
+        if (key != null && !key.isBlank()) {
+          authors.add(new BookAuthorRefDto(new AuthorRefDto(key, value(author, "name", null))));
+        }
+      }
+    }
+    return authors;
+  }
+
+  private static List<BookWorkRefDto> bookWorks(JsonNode array) {
+    List<BookWorkRefDto> works = new ArrayList<>();
+    if (array != null && array.isArray()) {
+      for (JsonNode node : array) {
+        String key = value(node, "key", null);
+        if (key != null && !key.isBlank()) {
+          works.add(new BookWorkRefDto(key));
+        }
+      }
+    }
+    return works;
+  }
+
+  private static List<Long> longValues(JsonNode array, int limit) {
+    List<Long> values = new ArrayList<>();
+    if (array != null && array.isArray()) {
+      for (int i = 0; i < Math.min(limit, array.size()); i++) {
+        JsonNode node = array.get(i);
+        if (node != null && node.canConvertToLong()) {
+          values.add(node.asLong());
+        }
+      }
+    }
+    return values;
   }
 
   private static String authorName(JsonNode doc) {
@@ -114,5 +221,66 @@ public final class OpenLibraryMapper {
 
   private static String value(JsonNode node, String field, String fallback) {
     return node.hasNonNull(field) ? node.path(field).asText() : fallback;
+  }
+
+  private static String textValue(JsonNode node, String field) {
+    if (node == null || !node.has(field)) {
+      return "";
+    }
+    JsonNode value = node.get(field);
+    if (value == null || value.isNull()) {
+      return "";
+    }
+    if (value.isTextual()) {
+      return value.asText("").trim();
+    }
+    if (value.hasNonNull("value")) {
+      return value.path("value").asText("").trim();
+    }
+    if (value.hasNonNull("excerpt")) {
+      return value.path("excerpt").asText("").trim();
+    }
+    if (value.hasNonNull("text")) {
+      return value.path("text").asText("").trim();
+    }
+    return value.asText("").trim();
+  }
+
+  private static String proseText(JsonNode... nodes) {
+    for (JsonNode node : nodes) {
+      String text = textNode(node);
+      if (!text.isBlank()) {
+        return text;
+      }
+    }
+    return "";
+  }
+
+  private static String textNode(JsonNode node) {
+    if (node == null || node.isNull()) {
+      return "";
+    }
+    if (node.isArray()) {
+      for (JsonNode item : node) {
+        String text = textNode(item);
+        if (!text.isBlank()) {
+          return text;
+        }
+      }
+      return "";
+    }
+    if (node.isTextual()) {
+      return node.asText("").trim();
+    }
+    if (node.hasNonNull("value")) {
+      return node.path("value").asText("").trim();
+    }
+    if (node.hasNonNull("excerpt")) {
+      return node.path("excerpt").asText("").trim();
+    }
+    if (node.hasNonNull("text")) {
+      return node.path("text").asText("").trim();
+    }
+    return node.asText("").trim();
   }
 }

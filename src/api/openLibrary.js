@@ -1,5 +1,27 @@
-const BASE_URL = "https://openlibrary.org";
-const COVERS_URL = "https://covers.openlibrary.org/b";
+import { Platform } from "react-native";
+
+const DEFAULT_API_BASE_URL = Platform.select({
+  android: "http://10.0.2.2:8080/api/v1",
+  default: "http://localhost:8080/api/v1"
+});
+
+const API_BASE_URL = process.env.EXPO_PUBLIC_LIBRARY_API_URL || DEFAULT_API_BASE_URL;
+
+function isValidCoverId(coverId) {
+  if (coverId === undefined || coverId === null || coverId === "") return false;
+  const numeric = Number(coverId);
+  return Number.isFinite(numeric) && numeric > 0;
+}
+
+function isBadCoverUrl(url) {
+  const match = String(url).match(/\/covers\/(id|olid|isbn)\/([^/?#]+)(?:[/?#]|$)/i);
+  if (!match) return false;
+
+  const [, type, value] = match;
+  if (value === "-1") return true;
+  if ((type === "id" || type === "isbn") && Number(value) <= 0) return true;
+  return false;
+}
 
 function toQuery(params = {}) {
   const entries = Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== "");
@@ -8,51 +30,59 @@ function toQuery(params = {}) {
 
 async function request(path, params) {
   const query = toQuery(params);
-  const url = `${BASE_URL}${path}${query ? `?${query}` : ""}`;
+  const url = `${API_BASE_URL}${path}${query ? `?${query}` : ""}`;
   const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`Open Library request failed: ${response.status}`);
+    throw new Error(`Backend request failed: ${response.status}`);
   }
   return response.json();
 }
 
-export function getCoverUrl({ coverId, isbn, size = "M" }) {
-  if (coverId) return `${COVERS_URL}/id/${coverId}-${size}.jpg`;
-  if (isbn) return `${COVERS_URL}/isbn/${isbn}-${size}.jpg`;
+export function getCoverUrl({ coverId, coverEditionKey, isbn, size = "M" }) {
+  if (isValidCoverId(coverId)) return `/covers/id/${coverId}?size=${size}`;
+  if (coverEditionKey) return `/covers/olid/${coverEditionKey}?size=${size}`;
+  if (isbn && String(isbn).trim()) return `/covers/isbn/${isbn}?size=${size}`;
   return null;
 }
 
-export function resolveAssetUrl(url) {
+export function normalizeCoverUrl(url) {
   if (!url) return null;
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  if (url.startsWith("/")) return `${API_BASE_URL}${url}`;
-  return `${API_BASE_URL}/${url}`;
+  const trimmed = String(url).trim();
+  return isBadCoverUrl(trimmed) ? null : trimmed;
+}
+
+export function normalizeAuthorName(name, fallback = "Unknown author") {
+  const trimmed = typeof name === "string" ? name.trim() : "";
+  return trimmed && trimmed !== "Unknown author" ? trimmed : fallback;
+}
+
+export function resolveAssetUrl(url) {
+  const normalized = normalizeCoverUrl(url);
+  if (!normalized) return null;
+  if (normalized.startsWith("http://") || normalized.startsWith("https://")) return normalized;
+  if (normalized.startsWith("/")) return `${API_BASE_URL}${normalized}`;
+  return `${API_BASE_URL}/${normalized}`;
 }
 
 export async function searchBooks(query, page = 1) {
-  const data = await request("/search.json", { q: query, page, limit: 20 });
+  const data = await request("/search", { q: query, page });
+  const items = data.books || data.items || (data.docs || []).map(mapSearchDoc);
   return {
-    total: data.numFound || 0,
-    items: (data.docs || []).map(mapSearchDoc)
+    total: data.numFound || data.total || 0,
+    items
   };
 }
 
 export async function getSubjectBooks(subject, limit = 20) {
-  const data = await request(`/subjects/${encodeURIComponent(subject)}.json`, { limit });
+  const data = await request(`/subjects/${encodeURIComponent(subject)}`);
   return {
     name: data.name || subject,
-    works: (data.works || []).map(mapSubjectWork)
+    works: data.works || data.items || (data.docs || []).map(mapSubjectWork)
   };
 }
 
 export async function getBookDetails(workKey) {
-  return request(normalizeWorkKey(workKey));
-}
-
-export async function getBookEditions(workKey, limit = 20) {
-  const normalized = normalizeWorkKey(workKey).replace(".json", "");
-  const data = await request(`${normalized}/editions.json`, { limit });
-  return data.entries || [];
+  return request("/books", { key: workKey });
 }
 
 export async function getSearchBySubject(subject, page = 1) {
@@ -60,13 +90,12 @@ export async function getSearchBySubject(subject, page = 1) {
 }
 
 export async function getAuthor(authorKey) {
-  return request(normalizeJsonPath(authorKey));
+  return request("/authors", { key: authorKey });
 }
 
-export async function getAuthorWorks(authorKey, limit = 20) {
-  const normalized = normalizeJsonPath(authorKey).replace(".json", "");
-  const data = await request(`${normalized}/works.json`, { limit });
-  return data.entries || [];
+export async function getAuthorWorks(authorKey, limit = 10) {
+  const data = await request("/authors/works", { key: authorKey, limit });
+  return data.entries || data.works || data.items || [];
 }
 
 export function mapSearchDoc(doc) {
@@ -103,17 +132,14 @@ export function extractDescription(value) {
   if (!value) return "No description available.";
   if (typeof value === "string") return value;
   if (typeof value.value === "string") return value.value;
+  if (typeof value.description === "string") return value.description;
+  if (typeof value.first_sentence === "string") return value.first_sentence;
+  if (typeof value.notes === "string") return value.notes;
+  if (typeof value.excerpt === "string") return value.excerpt;
+  if (typeof value.description?.value === "string") return value.description.value;
+  if (typeof value.first_sentence?.value === "string") return value.first_sentence.value;
+  if (typeof value.notes?.value === "string") return value.notes.value;
+  if (typeof value.excerpt?.value === "string") return value.excerpt.value;
   return "No description available.";
 }
 
-function normalizeWorkKey(workKey) {
-  const path = workKey || "";
-  if (path.startsWith("/works/")) return normalizeJsonPath(path);
-  throw new Error("Only work keys are supported for details.");
-}
-
-function normalizeJsonPath(path) {
-  if (!path) return "";
-  if (path.endsWith(".json")) return path;
-  return `${path}.json`;
-}

@@ -9,18 +9,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.Instant;
-import java.util.UUID;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
+import java.time.Instant;
+import java.util.UUID;
+
 @Setter
-@NoArgsConstructor
+@Getter
 @Entity
 @Table(name = "wishlist_items")
 public class WishlistItem {
+  public WishlistItem() {}
+
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
@@ -32,18 +33,19 @@ public class WishlistItem {
   @Column(name = "book_key", nullable = false, length = 255)
   private String bookKey;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "text")
   private String title;
 
-  @Column(name = "author_name", nullable = false)
+  @Column(name = "author_name", nullable = false, columnDefinition = "text")
   private String authorName;
 
-  @Column(name = "cover_url")
+  @Column(name = "cover_url", columnDefinition = "text")
   private String coverUrl;
 
   @Column(name = "book_json", nullable = false, columnDefinition = "text")
   private String bookJson;
 
-  @Column(nullable = false)
+  @Column(nullable = false, columnDefinition = "timestamp with time zone")
   private Instant addedAt;
+
 }

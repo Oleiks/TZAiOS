@@ -4,6 +4,8 @@
 
 Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia endpointy dla katalogu książek, wyszukiwania, autora i okładek oraz cachuje odpowiedzi z Open Library.
 
+Poniżej są opisane tylko endpointy używane przez aktualny klient mobilny.
+
 ## Bazowy adres API
 
 - lokalnie: `http://localhost:8080/api/v1`
@@ -33,11 +35,6 @@ Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia en
 - szczegóły książki,
 - parametr: `key`.
 
-#### `GET /books/editions?key=/works/...`
-
-- wydania książki,
-- parametr: `key`.
-
 #### `GET /authors?key=/authors/...`
 
 - dane autora,
@@ -46,7 +43,7 @@ Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia en
 #### `GET /authors/works?key=/authors/...`
 
 - dzieła autora,
-- parametr: `key`.
+- parametry: `key`, opcjonalnie `limit`.
 
 #### `GET /covers/id/{coverId}?size=M`
 
@@ -60,8 +57,8 @@ Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia en
 
 ## Request headers
 
-- `Content-Type: application/json`
-- brak dodatkowych nagłówków poza standardowymi dla zapytań publicznych.
+- brak dodatkowych nagłówków po stronie klienta,
+- endpointy są publiczne i używane przez zwykłe zapytania `GET`.
 
 ## Response model
 
@@ -74,7 +71,7 @@ Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia en
   "title": "Example Book",
   "authorName": "Jane Doe",
   "authorKey": "/authors/OL1A",
-  "year": 1999,
+  "firstPublishYear": 1999,
   "rating": 4.5,
   "coverUrl": "/covers/id/12?size=M",
   "subjects": ["fiction"],
@@ -88,11 +85,20 @@ Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia en
 {
   "sections": [
     {
-      "key": "fiction",
+      "id": "fiction",
       "title": "Trending Now",
-      "books": []
+      "works": []
     }
   ]
+}
+```
+
+### `SearchResponse`
+
+```json
+{
+  "numFound": 1234,
+  "books": []
 }
 ```
 
@@ -105,6 +111,44 @@ Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia en
 }
 ```
 
+### `AuthorDto`
+
+```json
+{
+  "key": "/authors/OL1A",
+  "name": "Jane Doe",
+  "bio": "Short biography text.",
+  "personalName": "Jane Doe",
+  "photos": [1, 2]
+}
+```
+
+### `AuthorWorksResponse`
+
+```json
+{
+  "entries": []
+}
+```
+
+### `BookDetailsDto`
+
+```json
+{
+  "key": "/works/OL123W",
+  "title": "Example Book",
+  "description": "Long description or first sentence fallback.",
+  "firstSentence": "First sentence.",
+  "notes": "",
+  "excerpt": "",
+  "coverUrl": "/covers/id/12?size=M",
+  "covers": [12],
+  "authors": [],
+  "works": [],
+  "subjects": ["fiction"]
+}
+```
+
 ## Model danych aplikacji
 
 ### Mobile models
@@ -112,17 +156,21 @@ Aplikacja mobilna korzysta wyłącznie z własnego backendu. Backend wystawia en
 - `BookSummaryDto` - książka w listach,
 - `SectionDto` - sekcja startowa,
 - `HomeResponse` - strona główna,
+- `SearchResponse` - wyniki wyszukiwania,
 - `SubjectResponse` - subject i jego książki,
-- `Author` response - dane autora,
-- `Book details` response - szczegóły książki.
+- `AuthorDto` - dane autora,
+- `AuthorWorksResponse` - dzieła autora,
+- `BookDetailsDto` - szczegóły książki.
 
 ### Mapowanie response → model
 
-- `search` -> lista `BookSummaryDto`,
-- `subjects/{subject}` -> lista `BookSummaryDto`,
-- `books` -> JSON książki,
-- `authors` -> JSON autora,
-- `covers/*` -> odpowiedź binarna obrazu.
+- `home` -> `HomeResponse`,
+- `search` -> `SearchResponse.books`,
+- `subjects/{subject}` -> `SubjectResponse.works`,
+- `books` -> `BookDetailsDto`,
+- `authors` -> `AuthorDto`,
+- `authors/works` -> `AuthorWorksResponse.entries`,
+- `covers/*` -> binarna odpowiedź obrazu.
 
 ## TTL cache
 

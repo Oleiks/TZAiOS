@@ -3,6 +3,8 @@ package org.example.library.controller;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+
+import lombok.RequiredArgsConstructor;
 import org.example.library.dto.wishlist.WishlistItemDto;
 import org.example.library.dto.wishlist.WishlistUpsertRequest;
 import org.example.library.service.WishlistService;
@@ -19,12 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/wishlist")
+@RequiredArgsConstructor
 public class WishlistController {
   private final WishlistService wishlistService;
-
-  public WishlistController(WishlistService wishlistService) {
-    this.wishlistService = wishlistService;
-  }
 
   @GetMapping
   public List<WishlistItemDto> list(Authentication authentication) {

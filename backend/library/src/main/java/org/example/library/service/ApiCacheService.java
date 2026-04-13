@@ -6,20 +6,18 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+
+import lombok.RequiredArgsConstructor;
 import org.example.library.entity.ApiCacheEntry;
 import org.example.library.repository.ApiCacheRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ApiCacheService {
   private final ApiCacheRepository repository;
   private final ObjectMapper objectMapper;
-
-  public ApiCacheService(ApiCacheRepository repository, ObjectMapper objectMapper) {
-    this.repository = repository;
-    this.objectMapper = objectMapper;
-  }
 
   @Transactional
   public JsonNode cachedJson(String cacheKey, Duration ttl, Duration staleWindow, Supplier<JsonNode> loader) {

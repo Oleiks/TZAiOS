@@ -1,8 +1,18 @@
-import { extractDescription, getCoverUrl, mapSearchDoc } from "../src/api/openLibrary";
+import { extractDescription, getCoverUrl, mapSearchDoc, normalizeAuthorName, normalizeCoverUrl, resolveAssetUrl } from "../src/api/openLibrary";
 
 describe("openLibrary helpers", () => {
   test("builds a cover url from cover id", () => {
-    expect(getCoverUrl({ coverId: 42 })).toBe("http://localhost:8080/api/v1/covers/id/42?size=M");
+    expect(getCoverUrl({ coverId: 42 })).toBe("/covers/id/42?size=M");
+  });
+
+  test("drops invalid cover ids and urls", () => {
+    expect(getCoverUrl({ coverId: -1 })).toBeNull();
+    expect(normalizeCoverUrl("/covers/id/-1?size=M")).toBeNull();
+    expect(resolveAssetUrl("/covers/id/-1?size=M")).toBeNull();
+  });
+
+  test("keeps a real author name when fallback is unknown", () => {
+    expect(normalizeAuthorName("Unknown author", "Jane Doe")).toBe("Jane Doe");
   });
 
   test("maps search docs into app books", () => {
@@ -25,7 +35,7 @@ describe("openLibrary helpers", () => {
       authorKey: "/authors/OL1A",
       year: 1999,
       rating: undefined,
-      coverUrl: "http://localhost:8080/api/v1/covers/id/12?size=M",
+      coverUrl: "/covers/id/12?size=M",
       subjects: ["fiction", "adventure"],
       editionCount: 4
     });

@@ -1,6 +1,8 @@
 package org.example.library.controller;
 
 import java.util.UUID;
+
+import lombok.RequiredArgsConstructor;
 import org.example.library.dto.auth.UserDto;
 import org.example.library.service.AuthService;
 import org.springframework.security.core.Authentication;
@@ -10,12 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1")
+@RequiredArgsConstructor
 public class MeController {
   private final AuthService authService;
-
-  public MeController(AuthService authService) {
-    this.authService = authService;
-  }
 
   @GetMapping("/me")
   public UserDto me(Authentication authentication) {

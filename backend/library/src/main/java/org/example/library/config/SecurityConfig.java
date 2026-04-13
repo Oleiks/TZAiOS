@@ -29,7 +29,7 @@ public class SecurityConfig {
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(exception -> exception.authenticationEntryPoint(entryPoint))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/v1/auth/**", "/api/v1/home", "/api/v1/search", "/api/v1/subjects/**", "/api/v1/books/**", "/api/v1/authors/**", "/error").permitAll()
+            .requestMatchers("/api/v1/**").permitAll()
             .anyRequest().authenticated())
         .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
         .build();
