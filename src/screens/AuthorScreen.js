@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import { getAuthor, getAuthorWorks, getCoverUrl, normalizeAuthorName, normalizeCoverUrl, resolveAssetUrl } from "../api/openLibrary";
+import { getAuthor, getAuthorWorks, getCoverUrl, hydrateMissingBookCovers, normalizeAuthorName, normalizeCoverUrl, resolveAssetUrl } from "../api/openLibrary";
 import { BookCard } from "../components/BookCard";
 import { LoadingView } from "../components/LoadingView";
 import { colors, spacing } from "../theme/colors";
@@ -39,9 +39,10 @@ export function AuthorScreen({ navigation, route }) {
             authorKey: work.authorKey || authorKey,
             coverUrl: normalizeCoverUrl(work.coverUrl || work.cover_url || getCoverUrl({ coverId: work.covers?.[0] }))
           }));
-          const coverUris = enrichedWorks.map((work) => work.coverUrl).filter(Boolean).map((url) => resolveAssetUrl(url));
+          const hydratedWorks = typeof hydrateMissingBookCovers === "function" ? await hydrateMissingBookCovers(enrichedWorks) : enrichedWorks;
+          const coverUris = hydratedWorks.map((work) => work.coverUrl).filter(Boolean).map((url) => resolveAssetUrl(url));
           await Promise.allSettled(coverUris.map((uri) => Image.prefetch(uri)));
-          setWorks(enrichedWorks);
+          setWorks(hydratedWorks);
         }
         if (authorResult.status === "rejected" && worksResult.status === "rejected") {
           throw authorResult.reason || worksResult.reason;

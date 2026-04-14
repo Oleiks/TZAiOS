@@ -98,6 +98,35 @@ export async function getAuthorWorks(authorKey, limit = 20) {
   return data.entries || data.works || data.items || [];
 }
 
+export async function hydrateMissingBookCovers(books) {
+  if (!Array.isArray(books) || books.length === 0) {
+    return [];
+  }
+
+  const results = await Promise.allSettled(
+    books.map(async (book) => {
+      if (book?.coverUrl) {
+        return book;
+      }
+
+      const key = book?.workKey || book?.key || book?.id;
+      if (!key) {
+        return book;
+      }
+
+      const details = await getBookDetails(key);
+      const coverUrl = normalizeCoverUrl(details?.coverUrl || getCoverUrl({ coverId: details?.covers?.[0] }));
+      if (!coverUrl) {
+        return book;
+      }
+
+      return { ...book, coverUrl };
+    })
+  );
+
+  return results.map((result, index) => (result.status === "fulfilled" ? result.value : books[index]));
+}
+
 export function mapSearchDoc(doc) {
   const workKey = doc.key && doc.key.startsWith("/works/") ? doc.key : doc.cover_edition_key ? `/books/${doc.cover_edition_key}` : null;
   return {

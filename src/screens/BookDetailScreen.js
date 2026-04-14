@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { extractDescription, getAuthorWorks, getBookDetails, getCoverUrl, normalizeAuthorName, normalizeCoverUrl, resolveAssetUrl } from "../api/openLibrary";
+import { extractDescription, getAuthorWorks, getBookDetails, getCoverUrl, hydrateMissingBookCovers, normalizeAuthorName, normalizeCoverUrl, resolveAssetUrl } from "../api/openLibrary";
 import { BookCard } from "../components/BookCard";
 import { LoadingView } from "../components/LoadingView";
 import { SegmentedTabs } from "../components/SegmentedTabs";
+import { CoverImage } from "../components/CoverImage";
 import { useSaved } from "../state/SavedContext";
 import { colors, spacing } from "../theme/colors";
 
@@ -41,7 +42,9 @@ export function BookDetailScreen({ navigation, route }) {
           workKey: work.workKey || work.key || work.id || null
         }));
 
-        const coverUris = [detailData?.coverUrl, ...enrichedRelatedWorks.map((work) => work.coverUrl)]
+        const hydratedRelatedWorks = typeof hydrateMissingBookCovers === "function" ? await hydrateMissingBookCovers(enrichedRelatedWorks) : enrichedRelatedWorks;
+
+        const coverUris = [detailData?.coverUrl, ...hydratedRelatedWorks.map((work) => work.coverUrl)]
           .map((url) => normalizeCoverUrl(url))
           .filter(Boolean)
           .map((url) => resolveAssetUrl(url));
@@ -49,7 +52,7 @@ export function BookDetailScreen({ navigation, route }) {
 
         if (!mounted) return;
         setDetails(detailData);
-        setRelatedWorks(enrichedRelatedWorks);
+        setRelatedWorks(hydratedRelatedWorks);
       } catch (err) {
         if (mounted) setError(err.message || "Could not load this book.");
       } finally {
@@ -74,7 +77,7 @@ export function BookDetailScreen({ navigation, route }) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.hero}>
-        {cover ? <Image source={{ uri: cover }} style={styles.cover} /> : <View style={styles.coverPlaceholder} />}
+        <CoverImage uri={cover} style={styles.cover} placeholder={<View style={styles.coverPlaceholder} />} />
         <View style={styles.heroBody}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.author}>{authorName}</Text>

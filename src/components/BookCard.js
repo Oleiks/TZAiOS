@@ -1,12 +1,12 @@
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { resolveAssetUrl } from "../api/openLibrary";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { CoverImage } from "./CoverImage";
 import { colors, spacing } from "../theme/colors";
 
 export function BookCard({ book, onPress, rightSlot }) {
   return (
     <Pressable style={styles.card} onPress={onPress}>
-      {book.coverUrl ? <Image source={{ uri: resolveAssetUrl(book.coverUrl) }} style={styles.cover} /> : <View style={styles.placeholder} />}
+      <CoverImage uri={book.coverUrl} style={styles.cover} placeholder={<View style={styles.placeholder} />} />
       <View style={styles.body}>
         <Text numberOfLines={2} style={styles.title}>
           {book.title}
