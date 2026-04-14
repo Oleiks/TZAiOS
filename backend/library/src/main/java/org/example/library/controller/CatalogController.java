@@ -26,13 +26,13 @@ public class CatalogController {
   }
 
   @GetMapping("/search")
-  public SearchResponse search(@RequestParam String q, @RequestParam(defaultValue = "1") int page) {
-    return catalogService.search(q, page);
+  public SearchResponse search(@RequestParam String q, @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "40") int limit) {
+    return catalogService.search(q, page, limit);
   }
 
   @GetMapping("/subjects/{subject}")
-  public SubjectResponse subject(@PathVariable String subject) {
-    return catalogService.subject(subject);
+  public SubjectResponse subject(@PathVariable String subject, @RequestParam(defaultValue = "40") int limit) {
+    return catalogService.subject(subject, limit);
   }
 
   @GetMapping("/books")

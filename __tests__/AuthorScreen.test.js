@@ -36,7 +36,7 @@ jest.mock("../src/components/LoadingView", () => ({
 Image.prefetch = jest.fn(async () => true);
 
 describe("AuthorScreen", () => {
-  test("loads at most ten author works with covers", async () => {
+  test("loads a larger author batch with covers", async () => {
     const navigation = { navigate: jest.fn() };
     const route = { params: { authorKey: "/authors/OL1A", authorName: "Jane Doe" } };
 
@@ -46,7 +46,7 @@ describe("AuthorScreen", () => {
     expect(getByText("Work 2:/covers/id/22?size=M:Jane Doe")).toBeTruthy();
 
     const { getAuthorWorks } = require("../src/api/openLibrary");
-    expect(getAuthorWorks).toHaveBeenCalledWith("/authors/OL1A", 10);
+    expect(getAuthorWorks).toHaveBeenCalledWith("/authors/OL1A", 20);
     expect(Image.prefetch).toHaveBeenCalledWith("http://localhost:8080/api/v1/covers/id/33?size=M");
     expect(Image.prefetch).toHaveBeenCalledWith("http://localhost:8080/api/v1/covers/id/22?size=M");
   });

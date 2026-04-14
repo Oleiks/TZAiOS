@@ -20,7 +20,7 @@ export function SearchScreen({ navigation }) {
     setLoading(true);
     setSearched(true);
     try {
-      const data = await searchBooks(term.trim(), 1);
+      const data = await searchBooks(term.trim(), 1, 40);
       setResults(data.items);
       addRecentSearch(term.trim());
     } finally {

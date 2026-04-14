@@ -64,8 +64,8 @@ export function resolveAssetUrl(url) {
   return `${API_BASE_URL}/${normalized}`;
 }
 
-export async function searchBooks(query, page = 1) {
-  const data = await request("/search", { q: query, page });
+export async function searchBooks(query, page = 1, limit = 40) {
+  const data = await request("/search", { q: query, page, limit });
   const items = data.books || data.items || (data.docs || []).map(mapSearchDoc);
   return {
     total: data.numFound || data.total || 0,
@@ -73,8 +73,8 @@ export async function searchBooks(query, page = 1) {
   };
 }
 
-export async function getSubjectBooks(subject, limit = 20) {
-  const data = await request(`/subjects/${encodeURIComponent(subject)}`);
+export async function getSubjectBooks(subject, limit = 40) {
+  const data = await request(`/subjects/${encodeURIComponent(subject)}`, { limit });
   return {
     name: data.name || subject,
     works: data.works || data.items || (data.docs || []).map(mapSubjectWork)
@@ -93,7 +93,7 @@ export async function getAuthor(authorKey) {
   return request("/authors", { key: authorKey });
 }
 
-export async function getAuthorWorks(authorKey, limit = 10) {
+export async function getAuthorWorks(authorKey, limit = 20) {
   const data = await request("/authors/works", { key: authorKey, limit });
   return data.entries || data.works || data.items || [];
 }

@@ -20,7 +20,7 @@ export function SubjectScreen({ navigation }) {
     setSubject(next);
     setLoading(true);
     try {
-      const data = await getSubjectBooks(next, 20);
+      const data = await getSubjectBooks(next, 40);
       setItems(data.works);
     } finally {
       setLoading(false);

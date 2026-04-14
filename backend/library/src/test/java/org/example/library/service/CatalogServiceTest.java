@@ -12,6 +12,8 @@ import java.time.Duration;
 import org.example.library.config.LibraryProperties;
 import org.example.library.dto.catalog.AuthorWorksResponse;
 import org.example.library.dto.catalog.BookDetailsDto;
+import org.example.library.repository.AuthorRepository;
+import org.example.library.repository.BookRepository;
 import org.junit.jupiter.api.Test;
 
 class CatalogServiceTest {
@@ -19,12 +21,15 @@ class CatalogServiceTest {
   void bookNormalizesDescriptionFromAlternateFields() throws Exception {
     OpenLibraryClient client = mock(OpenLibraryClient.class);
     ApiCacheService cache = mock(ApiCacheService.class);
+    CatalogSyncService syncService = mock(CatalogSyncService.class);
+    BookRepository books = mock(BookRepository.class);
+    AuthorRepository authors = mock(AuthorRepository.class);
     LibraryProperties properties = new LibraryProperties(
         new LibraryProperties.Security("secret", Duration.ofMinutes(30), Duration.ofDays(30)),
         new LibraryProperties.OpenLibrary("https://openlibrary.org"),
         new LibraryProperties.Cache(Duration.ofHours(6), Duration.ofHours(1), Duration.ofHours(6), Duration.ofHours(24), Duration.ofHours(24), Duration.ofHours(72)));
 
-    CatalogService service = new CatalogService(client, cache, properties);
+    CatalogService service = new CatalogService(client, cache, properties, syncService, books, authors);
 
     JsonNode payload = new ObjectMapper().readTree("""
         {
@@ -34,7 +39,9 @@ class CatalogServiceTest {
         }
         """);
 
+    when(client.work("/works/OL1W")).thenReturn(payload);
     when(cache.cachedJson(anyString(), any(), any(), any())).thenReturn(payload);
+    when(books.findByCatalogKey("/works/OL1W")).thenReturn(java.util.Optional.empty());
 
     BookDetailsDto result = service.book("/works/OL1W");
 
@@ -45,12 +52,15 @@ class CatalogServiceTest {
   void bookFlattensDescriptionObjectIntoText() throws Exception {
     OpenLibraryClient client = mock(OpenLibraryClient.class);
     ApiCacheService cache = mock(ApiCacheService.class);
+    CatalogSyncService syncService = mock(CatalogSyncService.class);
+    BookRepository books = mock(BookRepository.class);
+    AuthorRepository authors = mock(AuthorRepository.class);
     LibraryProperties properties = new LibraryProperties(
         new LibraryProperties.Security("secret", Duration.ofMinutes(30), Duration.ofDays(30)),
         new LibraryProperties.OpenLibrary("https://openlibrary.org"),
         new LibraryProperties.Cache(Duration.ofHours(6), Duration.ofHours(1), Duration.ofHours(6), Duration.ofHours(24), Duration.ofHours(24), Duration.ofHours(72)));
 
-    CatalogService service = new CatalogService(client, cache, properties);
+    CatalogService service = new CatalogService(client, cache, properties, syncService, books, authors);
 
     JsonNode payload = new ObjectMapper().readTree("""
         {
@@ -60,7 +70,9 @@ class CatalogServiceTest {
         }
         """);
 
+    when(client.work("/works/OL1W")).thenReturn(payload);
     when(cache.cachedJson(anyString(), any(), any(), any())).thenReturn(payload);
+    when(books.findByCatalogKey("/works/OL1W")).thenReturn(java.util.Optional.empty());
 
     BookDetailsDto result = service.book("/works/OL1W");
 
@@ -68,15 +80,18 @@ class CatalogServiceTest {
   }
 
   @Test
-  void authorWorksLimitsToTenAndHydratesMissingCovers() throws Exception {
+  void authorWorksReturnsRequestedBatchAndHydratesMissingCovers() throws Exception {
     OpenLibraryClient client = mock(OpenLibraryClient.class);
     ApiCacheService cache = mock(ApiCacheService.class);
+    CatalogSyncService syncService = mock(CatalogSyncService.class);
+    BookRepository books = mock(BookRepository.class);
+    AuthorRepository authors = mock(AuthorRepository.class);
     LibraryProperties properties = new LibraryProperties(
         new LibraryProperties.Security("secret", Duration.ofMinutes(30), Duration.ofDays(30)),
         new LibraryProperties.OpenLibrary("https://openlibrary.org"),
         new LibraryProperties.Cache(Duration.ofHours(6), Duration.ofHours(1), Duration.ofHours(6), Duration.ofHours(24), Duration.ofHours(24), Duration.ofHours(72)));
 
-    CatalogService service = new CatalogService(client, cache, properties);
+    CatalogService service = new CatalogService(client, cache, properties, syncService, books, authors);
 
     JsonNode payload = new ObjectMapper().readTree("""
         {
@@ -95,26 +110,20 @@ class CatalogServiceTest {
           ]
         }
         """);
-    JsonNode detail = new ObjectMapper().readTree("""
-        {
-          "key": "/works/OL1W",
-          "title": "Work 1",
-          "covers": [123]
-        }
-        """);
 
-    when(client.authorWorks("/authors/OL1A")).thenReturn(payload);
-    when(client.work("/works/OL1W")).thenReturn(detail);
+    when(client.author("/authors/OL1A")).thenReturn(new ObjectMapper().readTree("{\"key\":\"/authors/OL1A\",\"name\":\"Jane Doe\"}"));
+    when(client.authorWorks("/authors/OL1A", 20)).thenReturn(payload);
     when(cache.cachedJson(anyString(), any(), any(), any())).thenAnswer(invocation -> {
       @SuppressWarnings("unchecked")
       java.util.function.Supplier<JsonNode> loader = invocation.getArgument(3);
       return loader.get();
     });
+    when(books.findByAuthorKey("/authors/OL1A")).thenReturn(java.util.List.of());
+    when(authors.findByCatalogKey("/authors/OL1A")).thenReturn(java.util.Optional.empty());
 
     AuthorWorksResponse result = service.authorWorks("/authors/OL1A", 20);
 
-    assertThat(result.entries()).hasSize(10);
-    assertThat(result.entries().get(0).coverUrl()).isEqualTo("/covers/id/123?size=M");
-    assertThat(result.entries().get(9).title()).isEqualTo("Work 10");
+    assertThat(result.entries()).hasSize(11);
+    assertThat(result.entries().get(10).title()).isEqualTo("Work 11");
   }
 }

@@ -23,12 +23,12 @@ public class OpenLibraryClient {
   private final RestClient restClient;
   private final ObjectMapper objectMapper;
 
-  public JsonNode search(String query, int page) {
-    return getJson("/search.json", Map.of("q", query, "page", page, "limit", 20));
+  public JsonNode search(String query, int page, int limit) {
+    return getJson("/search.json", Map.of("q", query, "page", page, "limit", normalizeLimit(limit, 20, 50)));
   }
 
-  public JsonNode subject(String subject) {
-    return getJson("/subjects/" + subject + ".json", Map.of("limit", 20));
+  public JsonNode subject(String subject, int limit) {
+    return getJson("/subjects/" + subject + ".json", Map.of("limit", normalizeLimit(limit, 20, 60)));
   }
 
   public JsonNode work(String key) {
@@ -75,8 +75,8 @@ public class OpenLibraryClient {
     return getJson(normalizeKey(key) + ".json", Map.of());
   }
 
-  public JsonNode authorWorks(String key) {
-    return getJson(normalizeKey(key) + "/works.json", Map.of("limit", 20));
+  public JsonNode authorWorks(String key, int limit) {
+    return getJson(normalizeKey(key) + "/works.json", Map.of("limit", normalizeLimit(limit, 20, 40)));
   }
 
   private JsonNode getJson(String path, Map<String, ?> query) {
@@ -120,6 +120,11 @@ public class OpenLibraryClient {
       throw new IllegalArgumentException("Key is required");
     }
     return key.startsWith("/") ? key : "/" + key;
+  }
+
+  private int normalizeLimit(int requested, int defaultValue, int maxValue) {
+    int value = requested > 0 ? requested : defaultValue;
+    return Math.min(value, maxValue);
   }
 
   static JsonNode mergeWorkPayload(JsonNode workPayload, JsonNode editionPayload) {

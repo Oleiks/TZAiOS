@@ -45,7 +45,7 @@ describe("SearchScreen", () => {
       fireEvent.press(getByTestId("search-button"));
     });
 
-    await waitFor(() => expect(searchBooks).toHaveBeenCalledWith("Test", 1));
+    await waitFor(() => expect(searchBooks).toHaveBeenCalledWith("Test", 1, 40));
     await waitFor(() => expect(getByText("The Test Book")).toBeTruthy());
   });
 });

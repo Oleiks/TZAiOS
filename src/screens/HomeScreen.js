@@ -25,7 +25,7 @@ export function HomeScreen({ navigation }) {
     setLoading(true);
     setError("");
     try {
-      const data = await Promise.all(FEATURED_SUBJECTS.map((subject) => getSubjectBooks(subject.key, 16)));
+      const data = await Promise.all(FEATURED_SUBJECTS.map((subject) => getSubjectBooks(subject.key, 30)));
       const merged = FEATURED_SUBJECTS.map((meta, index) => ({
         title: meta.title,
         key: meta.key,

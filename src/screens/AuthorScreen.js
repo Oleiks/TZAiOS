@@ -19,7 +19,7 @@ export function AuthorScreen({ navigation, route }) {
       setLoading(true);
       setError("");
       try {
-        const [authorResult, worksResult] = await Promise.allSettled([getAuthor(authorKey), getAuthorWorks(authorKey, 10)]);
+        const [authorResult, worksResult] = await Promise.allSettled([getAuthor(authorKey), getAuthorWorks(authorKey, 20)]);
         if (!mounted) return;
         if (authorResult.status === "fulfilled") {
           setAuthor(authorResult.value);
@@ -29,7 +29,7 @@ export function AuthorScreen({ navigation, route }) {
           const normalizedWorks = Array.isArray(worksResult.value)
             ? worksResult.value
             : worksResult.value?.entries || worksResult.value?.works || worksResult.value?.items || [];
-          const enrichedWorks = normalizedWorks.slice(0, 10).map((work, index) => ({
+          const enrichedWorks = normalizedWorks.slice(0, 20).map((work, index) => ({
             ...work,
             id: work.id || work.key || `${authorKey}-${index}`,
             workKey: work.workKey || work.key || work.id || null,
@@ -71,7 +71,7 @@ export function AuthorScreen({ navigation, route }) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Works</Text>
+            <Text style={styles.sectionTitle}>Works</Text>
         {works.map((work, index) => {
           const book = {
             id: work.key || work.id || `${authorKey}-${index}`,

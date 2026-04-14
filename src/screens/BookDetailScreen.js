@@ -31,7 +31,7 @@ export function BookDetailScreen({ navigation, route }) {
         const detailAuthorKey = detailData?.authors?.[0]?.author?.key || detailData?.authors?.[0]?.key || null;
         const detailAuthorName = detailData?.authors?.[0]?.author?.name || detailData?.authors?.[0]?.name || null;
         const relatedAuthorKey = shouldLoadRelated ? (book.authorKey || detailAuthorKey) : null;
-        const worksResult = shouldLoadRelated && relatedAuthorKey ? await getAuthorWorks(relatedAuthorKey, 3) : [];
+        const worksResult = shouldLoadRelated && relatedAuthorKey ? await getAuthorWorks(relatedAuthorKey, 6) : [];
         const enrichedRelatedWorks = worksResult.map((work, index) => ({
           ...work,
           authorKey: work.authorKey || relatedAuthorKey,
@@ -118,10 +118,10 @@ export function BookDetailScreen({ navigation, route }) {
 
       {tab === "related" ? (
         <View style={styles.panel}>
-          <Text style={styles.panelTitle}>More by this author</Text>
+            <Text style={styles.panelTitle}>More by this author</Text>
           {relatedWorks.length ? (
             <View style={styles.relatedList}>
-              {relatedWorks.slice(0, 3).map((work, index) => {
+              {relatedWorks.slice(0, 6).map((work, index) => {
                 const relatedBook = {
                   ...work,
                   authorName: normalizeAuthorName(work.authorName, authorName),
